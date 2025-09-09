@@ -1,0 +1,196 @@
+2025-09-09 03:57:40 [error]: Failed to initialize nonce for key:
+{
+  "scope": "NonceManager",
+  "publicKey": "ed25519:6Bu4zNBf23wyJ5KadLwqMMZfAHK6Xqcdp7zdZGHqskjN",
+  "error": {}
+}
+2025-09-09 03:57:41 [error]: Failed to initialize FTTransferService: Failed to initialize nonce for key ed25519:6Bu4zNBf23wyJ5KadLwqMMZfAHK6Xqcdp7zdZGHqskjN
+Error: Failed to initialize nonce for key ed25519:6Bu4zNBf23wyJ5KadLwqMMZfAHK6Xqcdp7zdZGHqskjN
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:67:13)
+    at async Promise.all (index 2)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "FTTransferService"
+}
+2025-09-09 03:57:41 [error]: Failed to start server: Failed to initialize nonce for key ed25519:6Bu4zNBf23wyJ5KadLwqMMZfAHK6Xqcdp7zdZGHqskjN
+Error: Failed to initialize nonce for key ed25519:6Bu4zNBf23wyJ5KadLwqMMZfAHK6Xqcdp7zdZGHqskjN
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:67:13)
+    at async Promise.all (index 2)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "Index"
+}
+2025-09-09 04:02:21 [error]: Failed to initialize nonce for key:
+{
+  "scope": "NonceManager",
+  "publicKey": "ed25519:DhntNr1oonJbhPD9cxCihmgDABrmdkG6W6yZjhCNDXDK",
+  "error": {}
+}
+2025-09-09 04:02:21 [error]: Failed to initialize FTTransferService: Failed to initialize nonce for key ed25519:DhntNr1oonJbhPD9cxCihmgDABrmdkG6W6yZjhCNDXDK
+Error: Failed to initialize nonce for key ed25519:DhntNr1oonJbhPD9cxCihmgDABrmdkG6W6yZjhCNDXDK
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:67:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 4)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "FTTransferService"
+}
+2025-09-09 04:02:22 [error]: Failed to start server: Failed to initialize nonce for key ed25519:DhntNr1oonJbhPD9cxCihmgDABrmdkG6W6yZjhCNDXDK
+Error: Failed to initialize nonce for key ed25519:DhntNr1oonJbhPD9cxCihmgDABrmdkG6W6yZjhCNDXDK
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:67:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 4)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "Index"
+}
+2025-09-09 04:15:14 [error]: Failed to initialize nonce for key ed25519:5zeQt625DejsbQWRpq52ApDBgdjKUDK6QdZSSudRsHYD: Can't complete the action because access key ed25519:5zeQt625DejsbQWRpq52ApDBgdjKUDK6QdZSSudRsHYD doesn't exist
+Error: Can't complete the action because access key ed25519:5zeQt625DejsbQWRpq52ApDBgdjKUDK6QdZSSudRsHYD doesn't exist
+    at JsonRpcProvider.sendJsonRpc (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\node_modules\.pnpm\@near-js+providers@2.3.0_@n_72c7e4ec6dea4419eba51054d460beab\node_modules\@near-js\providers\lib\commonjs\json-rpc-provider.cjs:467:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at JsonRpcProvider.query (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\node_modules\.pnpm\@near-js+providers@2.3.0_@n_72c7e4ec6dea4419eba51054d460beab\node_modules\@near-js\providers\lib\commonjs\json-rpc-provider.cjs:265:16)
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:46:25)
+    at async Promise.all (index 3)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "NonceManager"
+}
+2025-09-09 04:15:14 [error]: Failed to initialize FTTransferService: Failed to initialize nonce for key ed25519:5zeQt625DejsbQWRpq52ApDBgdjKUDK6QdZSSudRsHYD
+Error: Failed to initialize nonce for key ed25519:5zeQt625DejsbQWRpq52ApDBgdjKUDK6QdZSSudRsHYD
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:70:11)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 3)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "FTTransferService"
+}
+2025-09-09 04:15:14 [error]: Failed to start server: Failed to initialize nonce for key ed25519:5zeQt625DejsbQWRpq52ApDBgdjKUDK6QdZSSudRsHYD
+Error: Failed to initialize nonce for key ed25519:5zeQt625DejsbQWRpq52ApDBgdjKUDK6QdZSSudRsHYD
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:70:11)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 3)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "Index"
+}
+2025-09-09 04:28:22 [error]: Failed to initialize nonce manager: Failed to initialize nonce for key ed25519:6YoyTWXM25vGbZNTowkkd83ozMWhhA6k2KGvBu49qgzp
+Error: Failed to initialize nonce for key ed25519:6YoyTWXM25vGbZNTowkkd83ozMWhhA6k2KGvBu49qgzp
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:75:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 4)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "NonceManager"
+}
+2025-09-09 04:28:22 [error]: Failed to initialize FTTransferService: Failed to initialize nonce for key ed25519:6YoyTWXM25vGbZNTowkkd83ozMWhhA6k2KGvBu49qgzp
+Error: Failed to initialize nonce for key ed25519:6YoyTWXM25vGbZNTowkkd83ozMWhhA6k2KGvBu49qgzp
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:75:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 4)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "FTTransferService"
+}
+2025-09-09 04:28:22 [error]: Failed to start server: Failed to initialize nonce for key ed25519:6YoyTWXM25vGbZNTowkkd83ozMWhhA6k2KGvBu49qgzp
+Error: Failed to initialize nonce for key ed25519:6YoyTWXM25vGbZNTowkkd83ozMWhhA6k2KGvBu49qgzp
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:75:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 4)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "Index"
+}
+2025-09-09 04:32:39 [error]: Failed to initialize nonce for key ed25519:5QrDrMDbztGnKJsNoo4P1tg6MZ6dXFvBfBgCsxuAAsKF: fetch failed
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13484:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at BackOff.request (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\node_modules\.pnpm\@near-js+providers@2.3.0_@n_72c7e4ec6dea4419eba51054d460beab\node_modules\@near-js\providers\lib\commonjs\fetch_json.cjs:58:17)
+{
+  "scope": "NonceManager"
+}
+2025-09-09 04:32:39 [error]: Failed to initialize FTTransferService: Failed to initialize nonce for key ed25519:5QrDrMDbztGnKJsNoo4P1tg6MZ6dXFvBfBgCsxuAAsKF
+Error: Failed to initialize nonce for key ed25519:5QrDrMDbztGnKJsNoo4P1tg6MZ6dXFvBfBgCsxuAAsKF
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:76:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 6)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "FTTransferService"
+}
+2025-09-09 04:32:39 [error]: Failed to start server: Failed to initialize nonce for key ed25519:5QrDrMDbztGnKJsNoo4P1tg6MZ6dXFvBfBgCsxuAAsKF
+Error: Failed to initialize nonce for key ed25519:5QrDrMDbztGnKJsNoo4P1tg6MZ6dXFvBfBgCsxuAAsKF
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:76:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 6)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "Index"
+}
+2025-09-09 04:34:11 [error]: Failed to initialize nonce for key ed25519:5WAVVuQZUmZ6jrpSg15p9bjeRWUrWRjAZHA1RwHjCNDV: fetch failed
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13484:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at BackOff.request (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\node_modules\.pnpm\@near-js+providers@2.3.0_@n_72c7e4ec6dea4419eba51054d460beab\node_modules\@near-js\providers\lib\commonjs\fetch_json.cjs:58:17)
+{
+  "scope": "NonceManager"
+}
+2025-09-09 04:34:11 [error]: Failed to initialize FTTransferService: Failed to initialize nonce for key ed25519:5WAVVuQZUmZ6jrpSg15p9bjeRWUrWRjAZHA1RwHjCNDV
+Error: Failed to initialize nonce for key ed25519:5WAVVuQZUmZ6jrpSg15p9bjeRWUrWRjAZHA1RwHjCNDV
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:76:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 0)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "FTTransferService"
+}
+2025-09-09 04:34:11 [error]: Failed to start server: Failed to initialize nonce for key ed25519:5WAVVuQZUmZ6jrpSg15p9bjeRWUrWRjAZHA1RwHjCNDV
+Error: Failed to initialize nonce for key ed25519:5WAVVuQZUmZ6jrpSg15p9bjeRWUrWRjAZHA1RwHjCNDV
+    at NonceManager.initializeNonceForKey (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:76:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Promise.all (index 0)
+    at NonceManager.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\nonce-manager.ts:31:7)
+    at FTTransferService.initialize (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\services\transfer-service.ts:48:7)
+    at createServer (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\app\server.ts:70:3)
+    at bootstrap (C:\Users\OBOTOR FELIX\Desktop\OxF3stus\test\token-claim\src\index.ts:14:17)
+{
+  "scope": "Index"
+}
