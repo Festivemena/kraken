@@ -1,13 +1,10 @@
+# Multi-stage build for production-ready FT Transfer API
 FROM node:18-alpine AS builder
 
 # Install build dependencies
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    git
+RUN apk add --no-cache python3 make g++ git
 
-# Create app directory
+# Set working directory
 WORKDIR /app
 
 # Copy package files
@@ -19,41 +16,59 @@ RUN npm ci --only=production && npm cache clean --force
 
 # Copy source code
 COPY src/ ./src/
-COPY benchmarks/ ./benchmarks/
 
 # Build the application
 RUN npm run build
 
-# Remove dev dependencies
-RUN rm -rf node_modules && \
-    npm ci --only=production --ignore-scripts
+# Production stage
+FROM node:18-alpine AS production
 
-# Create runtime image
-FROM node:18-alpine AS runtime
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
 
 # Install runtime dependencies
-RUN apk add --no-cache tini
+RUN apk add --no-cache dumb-init curl
 
-# Create app user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S near -u 1001
-
-# Create app directory
+# Set working directory
 WORKDIR /app
 
 # Copy built application
-COPY --from=builder --chown=near:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=near:nodejs /app/dist ./dist
-COPY --from=builder --chown=near:nodejs /app/package.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 
-# Create logs directory
-RUN mkdir -p logs && chown near:nodejs logs
+# Copy additional files
+COPY --chown=nodejs:nodejs scripts/ ./scripts/
+COPY --chown=nodejs:nodejs benchmarks/ ./benchmarks/
+
+# Create necessary directories
+RUN mkdir -p logs benchmarks/results/{localnet,testnet} && \
+    chown -R nodejs:nodejs logs benchmarks
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV UV_THREADPOOL_SIZE=128
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
 
 # Switch to non-root user
-USER near
+USER nodejs
 
-# Use tini as init process
-ENTRYPOINT ["/sbin/tini", "--"]
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
 
 # Start the application
 CMD ["node", "dist/index.js"]
+
+# Labels for better container management
+LABEL maintainer="NEAR FT Transfer Team"
+LABEL version="1.0.0"
+LABEL description="High-performance NEAR FT transfer API service"
+LABEL org.opencontainers.image.source="https://github.com/your-org/ft-transfer-api"
