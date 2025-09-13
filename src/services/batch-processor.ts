@@ -262,41 +262,6 @@ export class BatchProcessor extends EventEmitter {
     this.emit('queueCleared', { clearedCount });
   }
 
-  public requeueFailedItems(items: QueuedTransfer[]): void {
-    items.forEach(item => {
-      item.retryCount++;
-      item.timestamp = Date.now();
-      
-      // Reduce priority for retried items
-      item.priority = Math.max(0.1, item.priority * 0.8);
-      
-      if (item.retryCount <= 3) {
-        this.queue.set(item.id, item);
-      } else {
-        this.logger.warn('Item exceeded max retries, dropping', { 
-          id: item.id, 
-          retryCount: item.retryCount 
-        });
-      }
-    });
-  }
-
-  // Get items by priority for external monitoring
-  public getQueueStats() {
-    const items = Array.from(this.queue.values());
-    const now = Date.now();
-    
-    return {
-      totalItems: items.length,
-      highPriority: items.filter(item => item.priority > 1).length,
-      oldestItem: items.length > 0 ? Math.max(...items.map(item => now - item.timestamp)) : 0,
-      retryItems: items.filter(item => item.retryCount > 0).length,
-      avgAge: items.length > 0 ? 
-        items.reduce((sum, item) => sum + (now - item.timestamp), 0) / items.length : 0
-    };
-  }
-
-  // Priority transfer for urgent requests
   public addPriorityTransfer(request: TransferRequest): string {
     return this.addToQueue(request, 10); // High priority
   }

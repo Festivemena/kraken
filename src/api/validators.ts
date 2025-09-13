@@ -12,7 +12,11 @@ export const transferSchema = Joi.object({
     .pattern(NEAR_ACCOUNT_PATTERN)
     .min(2)
     .max(64)
-    .message('receiverId must be a valid NEAR account ID (e.g., account.testnet or account.near)'),
+    .messages({
+      'string.pattern.base': 'receiverId must be a valid NEAR account ID (e.g., alice.testnet or alice.near)',
+      'string.empty': 'receiverId is required',
+      'any.required': 'receiverId is required'
+    }),
   
   amount: Joi.string()
     .required()
@@ -30,36 +34,65 @@ export const transferSchema = Joi.object({
         return helpers.error('amount.tooLarge');
       }
       
+      // Check for too many decimal places (prevent precision issues)
+      const decimalPlaces = (value.split('.')[1] || '').length;
+      if (decimalPlaces > 24) {
+        return helpers.error('amount.tooManyDecimals');
+      }
+      
       return value;
     })
     .messages({
       'amount.positive': 'amount must be a positive number',
-      'amount.tooLarge': 'amount exceeds maximum allowed value',
-      'string.pattern.base': 'amount must be a valid number string'
+      'amount.tooLarge': 'amount exceeds maximum allowed value (1 trillion)',
+      'amount.tooManyDecimals': 'amount cannot have more than 24 decimal places',
+      'string.pattern.base': 'amount must be a valid number string',
+      'string.empty': 'amount is required',
+      'any.required': 'amount is required'
     }),
   
   memo: Joi.string()
     .optional()
     .allow('')
     .max(256)
-    .pattern(/^[\x20-\x7E]*$/) // Printable ASCII characters only
-    .message('memo must contain only printable ASCII characters and be less than 256 characters')
+    .pattern(/^[\x20-\x7E\r\n\t]*$/) // Printable ASCII characters plus newlines and tabs
+    .messages({
+      'string.pattern.base': 'memo must contain only printable ASCII characters',
+      'string.max': 'memo must be less than 256 characters'
+    })
 });
 
-export const batchTransferSchema = Joi.object({
+export const bulkTransferSchema = Joi.object({
   transfers: Joi.array()
     .items(transferSchema)
     .min(1)
-    .max(100)
+    .max(1000)
     .required()
-    .message('transfers must be an array of 1-100 transfer objects'),
+    .messages({
+      'array.min': 'transfers must contain at least 1 transfer',
+      'array.max': 'transfers cannot contain more than 1000 transfers per request',
+      'any.required': 'transfers array is required'
+    }),
     
   priority: Joi.number()
     .optional()
     .min(0.1)
     .max(10)
     .default(1)
-    .message('priority must be between 0.1 and 10')
+    .messages({
+      'number.min': 'priority must be between 0.1 and 10',
+      'number.max': 'priority must be between 0.1 and 10'
+    }),
+    
+  batchId: Joi.string()
+    .optional()
+    .min(1)
+    .max(64)
+    .pattern(/^[a-zA-Z0-9_\-]+$/)
+    .messages({
+      'string.pattern.base': 'batchId must contain only alphanumeric characters, underscores, and hyphens',
+      'string.max': 'batchId must be less than 64 characters'
+    })
 });
 
 export const metricsQuerySchema = Joi.object({
@@ -67,93 +100,131 @@ export const metricsQuerySchema = Joi.object({
     .optional()
     .valid('1m', '5m', '15m', '1h', '24h')
     .default('5m')
-    .message('period must be one of: 1m, 5m, 15m, 1h, 24h'),
+    .messages({
+      'any.only': 'period must be one of: 1m, 5m, 15m, 1h, 24h'
+    }),
     
   detailed: Joi.boolean()
     .optional()
     .default(false)
-    .message('detailed must be a boolean value')
+    .messages({
+      'boolean.base': 'detailed must be a boolean value'
+    }),
+
+  includeHistory: Joi.boolean()
+    .optional()
+    .default(false)
+    .messages({
+      'boolean.base': 'includeHistory must be a boolean value'
+    })
 });
 
 export const healthCheckSchema = Joi.object({
   detailed: Joi.boolean()
     .optional()
     .default(false)
-    .message('detailed must be a boolean value')
+    .messages({
+      'boolean.base': 'detailed must be a boolean value'
+    })
 });
 
-// Validation for webhook callbacks (if implemented)
-export const webhookSchema = Joi.object({
-  url: Joi.string()
-    .uri({ scheme: ['http', 'https'] })
-    .required()
-    .message('url must be a valid HTTP or HTTPS URL'),
-    
-  events: Joi.array()
-    .items(Joi.string().valid('transfer_success', 'transfer_failed', 'batch_completed'))
-    .min(1)
-    .required()
-    .message('events must contain at least one valid event type'),
-    
-  secret: Joi.string()
+// Performance testing schema for benchmark validation
+export const benchmarkSchema = Joi.object({
+  targetTPS: Joi.number()
     .optional()
-    .min(8)
-    .max(64)
-    .message('secret must be between 8 and 64 characters')
+    .min(1)
+    .max(1000)
+    .default(100)
+    .messages({
+      'number.min': 'targetTPS must be at least 1',
+      'number.max': 'targetTPS cannot exceed 1000'
+    }),
+    
+  durationMinutes: Joi.number()
+    .optional()
+    .min(1)
+    .max(60)
+    .default(10)
+    .messages({
+      'number.min': 'durationMinutes must be at least 1',
+      'number.max': 'durationMinutes cannot exceed 60'
+    }),
+    
+  networkId: Joi.string()
+    .optional()
+    .valid('testnet', 'mainnet')
+    .default('testnet')
+    .messages({
+      'any.only': 'networkId must be either testnet or mainnet'
+    })
 });
 
-// Rate limiting bypass schema (for authenticated requests)
-export const rateLimitBypassSchema = Joi.object({
-  apiKey: Joi.string()
-    .required()
-    .length(32)
-    .pattern(/^[a-f0-9]{32}$/)
-    .message('apiKey must be a valid 32-character hex string')
-});
-
-// Custom validation helpers
+// Custom validation helpers for enhanced security and performance
 export const customValidators = {
   /**
-   * Validates NEAR account ID format
+   * Validates NEAR account ID format with additional security checks
    */
-  isValidNearAccountId: (accountId: string): boolean => {
-    return NEAR_ACCOUNT_PATTERN.test(accountId);
+  isValidNearAccountId: (accountId: string): { isValid: boolean; error?: string } => {
+    if (!accountId) {
+      return { isValid: false, error: 'Account ID is required' };
+    }
+
+    if (!NEAR_ACCOUNT_PATTERN.test(accountId)) {
+      return { isValid: false, error: 'Invalid NEAR account ID format' };
+    }
+
+    // Additional security checks
+    if (accountId.includes('..')) {
+      return { isValid: false, error: 'Account ID cannot contain consecutive dots' };
+    }
+
+    if (accountId.startsWith('.') || accountId.endsWith('.')) {
+      return { isValid: false, error: 'Account ID cannot start or end with a dot' };
+    }
+
+    return { isValid: true };
   },
 
   /**
-   * Validates amount format and converts to yoctoNEAR if needed
+   * Validates and normalizes amount with precision handling
    */
-  validateAndFormatAmount: (amount: string): { isValid: boolean; formatted: string; error?: string } => {
+  validateAndNormalizeAmount: (amount: string): { isValid: boolean; normalized?: string; error?: string } => {
+    if (!amount || amount.trim() === '') {
+      return { isValid: false, error: 'Amount is required' };
+    }
+
     if (!AMOUNT_PATTERN.test(amount)) {
-      return { isValid: false, formatted: '', error: 'Invalid amount format' };
+      return { isValid: false, error: 'Invalid amount format' };
     }
 
     try {
       const numValue = parseFloat(amount);
       
       if (numValue <= 0) {
-        return { isValid: false, formatted: '', error: 'Amount must be positive' };
+        return { isValid: false, error: 'Amount must be positive' };
       }
       
       if (numValue > 1e12) {
-        return { isValid: false, formatted: '', error: 'Amount too large' };
+        return { isValid: false, error: 'Amount too large' };
       }
 
-      // If amount contains decimals, assume it's in NEAR and convert to yoctoNEAR
-      if (amount.includes('.') && !amount.includes('e') && !amount.includes('E')) {
-        const yoctoAmount = (numValue * 1e24).toString();
-        return { isValid: true, formatted: yoctoAmount };
+      if (!isFinite(numValue)) {
+        return { isValid: false, error: 'Amount must be a finite number' };
       }
 
-      return { isValid: true, formatted: amount };
+      // Normalize the amount (remove leading zeros, etc.)
+      const normalized = numValue.toString();
+      
+      return { isValid: true, normalized };
     } catch (error) {
-      return { isValid: false, formatted: '', error: 'Invalid number format' };
+      return { isValid: false, error: 'Invalid number format' };
     }
   },
 
   /**
-   * Validates memo content for security
+   * Validates memo content for security and performance
    */
+  
   validateMemo: (memo?: string): { isValid: boolean; error?: string } => {
     if (!memo) return { isValid: true };
 
@@ -161,7 +232,7 @@ export const customValidators = {
       return { isValid: false, error: 'Memo too long (max 256 characters)' };
     }
 
-    // Check for suspicious patterns
+    // Check for suspicious patterns that might indicate injection attacks
     const suspiciousPatterns = [
       /<script/i,
       /javascript:/i,
@@ -169,7 +240,10 @@ export const customValidators = {
       /vbscript:/i,
       /<iframe/i,
       /<object/i,
-      /<embed/i
+      /<embed/i,
+      /on\w+\s*=/i, // onclick, onload, etc.
+      /\\x[0-9a-f]{2}/i, // hex encoding
+      /\\u[0-9a-f]{4}/i  // unicode encoding
     ];
 
     for (const pattern of suspiciousPatterns) {
@@ -178,110 +252,12 @@ export const customValidators = {
       }
     }
 
-    return { isValid: true };
-  },
-
-  /**
-   * Rate limiting validation
-   */
-  validateRateLimit: (ip: string, userAgent?: string): { isValid: boolean; error?: string } => {
-    // Check for suspicious user agents
-    const suspiciousAgents = [
-      /bot/i,
-      /crawler/i,
-      /scanner/i,
-      /spider/i
-    ];
-
-    if (userAgent) {
-      for (const pattern of suspiciousAgents) {
-        if (pattern.test(userAgent)) {
-          return { isValid: false, error: 'Automated requests not allowed' };
-        }
-      }
-    }
-
-    // Basic IP validation
-    const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$|^([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}$/i;
-    if (!ipPattern.test(ip)) {
-      return { isValid: false, error: 'Invalid IP address format' };
+    // Check for control characters (except allowed whitespace)
+    const controlCharPattern = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/;
+    if (controlCharPattern.test(memo)) {
+      return { isValid: false, error: 'Memo contains invalid control characters' };
     }
 
     return { isValid: true };
   }
-};
-
-// Schema validation middleware factory
-export const createValidationMiddleware = (schema: Joi.ObjectSchema) => {
-  return (req: any, res: any, next: any) => {
-    const { error, value } = schema.validate(req.body, {
-      abortEarly: false,
-      allowUnknown: false,
-      stripUnknown: true
-    });
-
-    if (error) {
-      const errorDetails = error.details.map(detail => ({
-        field: detail.path.join('.'),
-        message: detail.message,
-        value: detail.context?.value
-      }));
-
-      return res.status(400).json({
-        success: false,
-        error: 'Validation failed',
-        details: errorDetails
-      });
-    }
-
-    // Additional custom validation
-    if (value.receiverId && !customValidators.isValidNearAccountId(value.receiverId)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid NEAR account ID format'
-      });
-    }
-
-    if (value.amount) {
-      const amountValidation = customValidators.validateAndFormatAmount(value.amount);
-      if (!amountValidation.isValid) {
-        return res.status(400).json({
-          success: false,
-          error: amountValidation.error
-        });
-      }
-      value.amount = amountValidation.formatted;
-    }
-
-    if (value.memo) {
-      const memoValidation = customValidators.validateMemo(value.memo);
-      if (!memoValidation.isValid) {
-        return res.status(400).json({
-          success: false,
-          error: memoValidation.error
-        });
-      }
-    }
-
-    req.body = value;
-    next();
-  };
-};
-
-// Enhanced error response formatter
-export const formatValidationError = (error: Joi.ValidationError) => {
-  const details = error.details.map(detail => ({
-    field: detail.path.join('.'),
-    message: detail.message,
-    value: detail.context?.value,
-    type: detail.type
-  }));
-
-  return {
-    success: false,
-    error: 'Request validation failed',
-    code: 'VALIDATION_ERROR',
-    details,
-    timestamp: new Date().toISOString()
-  };
 };

@@ -22,12 +22,16 @@ export const errorHandler = (
     stack: error.stack,
     url: req.url,
     method: req.method,
-    ip: req.ip
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    statusCode
   });
   
   // Don't leak error details in production
   const response: any = {
+    success: false,
     error: message,
+    timestamp: new Date().toISOString(),
     ...(process.env.NODE_ENV !== 'production' && { stack: error.stack })
   };
   
@@ -62,3 +66,25 @@ export const validateRequest = (schema: any) =>
     req.body = value;
     next();
   };
+
+// Request logging middleware
+export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const { method, url, ip } = req;
+    const { statusCode } = res;
+    
+    logger.info('HTTP Request', {
+      method,
+      url,
+      ip,
+      statusCode,
+      duration: `${duration}ms`,
+      userAgent: req.get('User-Agent')
+    });
+  });
+  
+  next();
+};

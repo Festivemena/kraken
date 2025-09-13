@@ -1,6 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
 import { Logger } from '../utils/logger';
-import { delay } from '../utils/helpers';
 
 interface BenchmarkResult {
   totalRequests: number;
@@ -37,7 +36,7 @@ interface ThroughputMeasurement {
 }
 
 export class FTTransferBenchmark {
-  private logger = new Logger('ProductionBenchmark');
+  private logger = new Logger('FTBenchmark');
   private results: BenchmarkResult;
   private requestMetrics: RequestMetrics[] = [];
   private throughputMeasurements: ThroughputMeasurement[] = [];
@@ -80,7 +79,7 @@ export class FTTransferBenchmark {
     this.startTime = Date.now();
     const totalRequests = this.targetTps * 60 * this.durationMinutes;
 
-    this.logger.info('Starting production-ready benchmark', {
+    this.logger.info('Starting FT transfer benchmark for 100+ TPS requirement', {
       targetTps: this.targetTps,
       durationMinutes: this.durationMinutes,
       totalRequests,
@@ -91,18 +90,23 @@ export class FTTransferBenchmark {
     // Test server connectivity first
     await this.testConnectivity();
 
-    // Start throughput monitoring
+    // Start throughput monitoring every 5 seconds
     const throughputInterval = setInterval(() => {
       this.measureThroughput();
-    }, 5000); // Every 5 seconds
+    }, 5000);
 
-    // Start request generation
+    // Progress monitoring every 10 seconds
+    const progressInterval = setInterval(() => {
+      this.logProgress();
+    }, 10000);
+
+    // Generate requests at target TPS with proper timing
     const requestPromises: Promise<void>[] = [];
     let requestsSent = 0;
 
-    // Generate requests at target TPS
-    const intervalMs = 1000; // 1 second intervals
-    const requestsPerInterval = this.targetTps;
+    // Use more precise timing for high TPS
+    const intervalMs = 100; // 100ms intervals for better precision
+    const requestsPerInterval = Math.ceil(this.targetTps / 10); // requests per 100ms
 
     const requestInterval = setInterval(() => {
       if (requestsSent >= totalRequests) {
@@ -110,17 +114,12 @@ export class FTTransferBenchmark {
         return;
       }
 
-      // Send burst of requests
+      // Send batch of requests for this interval
       for (let i = 0; i < requestsPerInterval && requestsSent < totalRequests; i++) {
         const requestId = requestsSent++;
-        requestPromises.push(this.sendSingleRequest(requestId));
+        requestPromises.push(this.sendTransferRequest(requestId));
       }
     }, intervalMs);
-
-    // Progress monitoring
-    const progressInterval = setInterval(() => {
-      this.logProgress();
-    }, 10000); // Every 10 seconds
 
     // Stop after duration
     setTimeout(() => {
@@ -130,15 +129,15 @@ export class FTTransferBenchmark {
       this.logger.info('Benchmark duration completed, waiting for remaining requests...');
     }, this.durationMinutes * 60 * 1000);
 
-    // Wait for all requests to complete (with timeout)
+    // Wait for all requests to complete with timeout
     const completionTimeout = setTimeout(() => {
       this.logger.warn('Benchmark completion timeout reached');
-    }, (this.durationMinutes * 60 + 60) * 1000); // Extra minute for completion
+    }, (this.durationMinutes * 60 + 60) * 1000);
 
     await Promise.allSettled(requestPromises);
     clearTimeout(completionTimeout);
 
-    // Final calculations
+    // Calculate final results
     this.completeBenchmark();
 
     return this.results;
@@ -146,23 +145,24 @@ export class FTTransferBenchmark {
 
   private async testConnectivity(): Promise<void> {
     try {
-      this.logger.info('Testing server connectivity...');
+      this.logger.info('Testing API server connectivity...');
       const response = await axios.get(`${this.apiUrl}/health`, { timeout: 5000 });
       
       if (response.status !== 200) {
         throw new Error(`Health check failed with status: ${response.status}`);
       }
       
-      this.logger.info('Server connectivity test passed');
+      this.logger.info('API server connectivity test passed');
     } catch (error) {
-      this.logger.error('Server connectivity test failed:', error);
-      throw new Error(`Cannot connect to server at ${this.apiUrl}`);
+      this.logger.error('API server connectivity test failed:', error);
+      throw new Error(`Cannot connect to API server at ${this.apiUrl}`);
     }
   }
 
-  private async sendSingleRequest(requestId: number): Promise<void> {
-    const receiverId = `benchmark-${requestId}-${Math.random().toString(36).substring(7)}.${this.network}`;
-    const amount = this.generateRandomAmount();
+  private async sendTransferRequest(requestId: number): Promise<void> {
+    // Generate realistic test data
+    const receiverId = this.generateTestReceiverId(requestId);
+    const amount = this.generateTestAmount();
     
     const metric: RequestMetrics = { 
       startTime: Date.now(),
@@ -195,7 +195,7 @@ export class FTTransferBenchmark {
         metric.error = response.data.error || `HTTP ${response.status}`;
         this.results.failedRequests++;
         
-        // Track error types
+        // Track error types for analysis
         const errorType = this.categorizeError(response.status, response.data.error);
         this.errorsByType.set(errorType, (this.errorsByType.get(errorType) || 0) + 1);
       }
@@ -211,8 +211,23 @@ export class FTTransferBenchmark {
     }
   }
 
-  private generateRandomAmount(): string {
-    // Generate amounts between 1 and 1000 tokens
+  private generateTestReceiverId(requestId: number): string {
+    // Generate valid testnet account IDs for testing
+    // In production benchmark, these would need to be real accounts
+    const testAccounts = [
+      'alice.testnet',
+      'bob.testnet',
+      'carol.testnet',
+      'dave.testnet',
+      'eve.testnet'
+    ];
+    
+    // Rotate through test accounts or create deterministic ones
+    return testAccounts[requestId % testAccounts.length];
+  }
+
+  private generateTestAmount(): string {
+    // Generate realistic transfer amounts (1-1000 tokens)
     const amount = Math.floor(Math.random() * 1000) + 1;
     return amount.toString();
   }
@@ -251,7 +266,7 @@ export class FTTransferBenchmark {
     const totalTarget = this.targetTps * 60 * this.durationMinutes;
     const progress = (completed / totalTarget) * 100;
     
-    // Calculate current TPS (last 10 seconds)
+    // Calculate current TPS (last measurement window)
     const recentMeasurements = this.throughputMeasurements.slice(-2);
     let currentTps = 0;
     
@@ -262,7 +277,7 @@ export class FTTransferBenchmark {
       currentTps = requestDiff / timeDiff;
     }
     
-    this.logger.info('Production benchmark progress', {
+    this.logger.info('FT Transfer Benchmark Progress (100+ TPS Target)', {
       progress: `${progress.toFixed(1)}%`,
       completed,
       totalTarget,
@@ -301,8 +316,8 @@ export class FTTransferBenchmark {
     this.results.throughputOverTime = this.calculateThroughputOverTime();
     this.results.errorsByType = this.errorsByType;
 
-    this.printDetailedResults();
-    this.saveResults();
+    this.printBenchmarkResults();
+    this.saveBenchmarkResults();
   }
 
   private calculateThroughputOverTime(): Array<{ timestamp: number; tps: number; success: number; errors: number }> {
@@ -328,10 +343,10 @@ export class FTTransferBenchmark {
     return throughputData;
   }
 
-  private printDetailedResults(): void {
-    console.log('\n' + '='.repeat(60));
-    console.log('PRODUCTION-READY BENCHMARK RESULTS');
-    console.log('='.repeat(60));
+  private printBenchmarkResults(): void {
+    console.log('\n' + '='.repeat(70));
+    console.log('FT TRANSFER API BENCHMARK RESULTS (100+ TPS REQUIREMENT)');
+    console.log('='.repeat(70));
     console.log(`Network: ${this.results.network}`);
     console.log(`API URL: ${this.apiUrl}`);
     console.log(`Duration: ${this.durationMinutes} minutes`);
@@ -365,48 +380,48 @@ export class FTTransferBenchmark {
       console.log('');
     }
     
-    // Performance assessment
-    console.log('PERFORMANCE ASSESSMENT:');
-    const tpsAchievement = (this.results.actualTps / this.targetTps) * 100;
-    if (tpsAchievement >= 95) {
-      console.log('✅ EXCELLENT: Target TPS achieved');
-    } else if (tpsAchievement >= 80) {
-      console.log('✅ GOOD: Close to target TPS');
-    } else if (tpsAchievement >= 60) {
-      console.log('⚠️  FAIR: Below target TPS but acceptable');
+    // Assessment for 100+ TPS requirement
+    console.log('BOUNTY REQUIREMENT ASSESSMENT (100+ TPS):');
+    if (this.results.actualTps >= 100) {
+      console.log('✅ REQUIREMENT MET: Achieved 100+ TPS');
+      if (this.results.actualTps >= 150) {
+        console.log('🚀 EXCELLENT: Significantly exceeded requirement');
+      } else if (this.results.actualTps >= 120) {
+        console.log('⭐ GREAT: Well above minimum requirement');
+      }
     } else {
-      console.log('❌ POOR: Significantly below target TPS');
+      console.log('❌ REQUIREMENT NOT MET: Below 100 TPS threshold');
     }
     
-    if (this.results.successRate >= 99.5) {
-      console.log('✅ EXCELLENT: Very high success rate');
-    } else if (this.results.successRate >= 95) {
-      console.log('✅ GOOD: High success rate');
+    if (this.results.successRate >= 95) {
+      console.log('✅ HIGH RELIABILITY: Success rate >= 95%');
     } else if (this.results.successRate >= 90) {
-      console.log('⚠️  FAIR: Acceptable success rate');
+      console.log('⚠️  ACCEPTABLE: Success rate >= 90%');
     } else {
-      console.log('❌ POOR: Low success rate');
+      console.log('❌ LOW RELIABILITY: Success rate < 90%');
     }
     
-    console.log('='.repeat(60));
+    console.log('='.repeat(70));
   }
 
-  private saveResults(): void {
+  private saveBenchmarkResults(): void {
     const fs = require('fs');
     const path = require('path');
     
-    const resultsDir = path.join(__dirname, 'results', this.network);
+    const resultsDir = path.join(process.cwd(), 'benchmark-results', this.network);
     if (!fs.existsSync(resultsDir)) {
       fs.mkdirSync(resultsDir, { recursive: true });
     }
     
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `production-benchmark-${this.targetTps}tps-${timestamp}.json`;
+    const filename = `ft-transfer-benchmark-${this.targetTps}tps-${timestamp}.json`;
     const filepath = path.join(resultsDir, filename);
     
     const resultData = {
       ...this.results,
       timestamp: new Date().toISOString(),
+      bountyRequirement: '100+ TPS for 10 minutes',
+      requirementMet: this.results.actualTps >= 100,
       config: {
         apiUrl: this.apiUrl,
         targetTps: this.targetTps,
@@ -417,9 +432,9 @@ export class FTTransferBenchmark {
     };
     
     fs.writeFileSync(filepath, JSON.stringify(resultData, null, 2));
-    this.logger.info(`Production benchmark results saved to: ${filepath}`);
+    this.logger.info(`Benchmark results saved to: ${filepath}`);
     
-    // Also save a CSV summary for analysis
+    // Save CSV summary for analysis
     this.saveCsvSummary(resultsDir, timestamp);
   }
 
@@ -431,8 +446,8 @@ export class FTTransferBenchmark {
     const csvFilepath = path.join(resultsDir, csvFilename);
     
     const csvData = [
-      'timestamp,network,target_tps,actual_tps,total_requests,successful_requests,failed_requests,success_rate,avg_response_time,p95_response_time,p99_response_time',
-      `${new Date().toISOString()},${this.network},${this.targetTps},${this.results.actualTps.toFixed(2)},${this.results.totalRequests},${this.results.successfulRequests},${this.results.failedRequests},${this.results.successRate.toFixed(2)},${this.results.avgResponseTime.toFixed(2)},${this.results.p95ResponseTime},${this.results.p99ResponseTime}`
+      'timestamp,network,target_tps,actual_tps,requirement_met,total_requests,successful_requests,failed_requests,success_rate,avg_response_time,p95_response_time,p99_response_time',
+      `${new Date().toISOString()},${this.network},${this.targetTps},${this.results.actualTps.toFixed(2)},${this.results.actualTps >= 100},${this.results.totalRequests},${this.results.successfulRequests},${this.results.failedRequests},${this.results.successRate.toFixed(2)},${this.results.avgResponseTime.toFixed(2)},${this.results.p95ResponseTime},${this.results.p99ResponseTime}`
     ].join('\n');
     
     fs.writeFileSync(csvFilepath, csvData);
