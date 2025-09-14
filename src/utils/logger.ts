@@ -32,8 +32,8 @@ const fileFormat = printf(({ level, message, timestamp, scope, stack, ...meta })
     level,
     scope: scope || 'APP',
     message,
-    ...(stack && { stack }),
-    ...(Object.keys(meta).length > 0 && { meta })
+    ...(stack ? { stack } : {}),
+    ...(Object.keys(meta).length > 0 ? { meta } : {})
   };
   
   return JSON.stringify(logEntry);

@@ -1,7 +1,7 @@
-import { 
-  Near, 
-  Account, 
-  KeyPair, 
+import {
+  Near,
+  Account,
+  KeyPair,
   connect,
   keyStores,
   utils
@@ -25,15 +25,15 @@ export class FTTransferService {
   private config = getConfig();
   private logger = new Logger('FTTransferService');
   private metrics = MetricsService.getInstance();
-  
+
   private batchProcessor: BatchProcessor;
-  private near: Near;
-  private account: Account;
-  private keyStore: keyStores.KeyStore;
-  
+  private near!: Near;
+  private account!: Account;
+  private keyStore!: keyStores.KeyStore;
+
   private transferQueue: PQueue;
   private concurrencyLimit = pLimit(this.config.maxParallelTransactions);
-  
+
   private isInitialized = false;
   private isShuttingDown = false;
 
@@ -47,7 +47,7 @@ export class FTTransferService {
       throwOnTimeout: true,
       autoStart: true
     });
-    
+
     this.batchProcessor = new BatchProcessor(
       {
         batchSize: this.config.batchSize,
@@ -77,18 +77,20 @@ export class FTTransferService {
         batchSize: this.config.batchSize,
         concurrency: this.config.queueConcurrency
       });
-      
+
       // Create in-memory key store for high performance
       this.keyStore = new keyStores.InMemoryKeyStore();
-      
+
       // Add master key to keystore
-      const masterKeyPair = KeyPair.fromString(this.config.masterPrivateKey);
+      const masterKeyPair = utils.KeyPair.fromString(
+        this.config.masterPrivateKey
+      );
       await this.keyStore.setKey(
         this.config.networkId,
         this.config.masterAccountId,
         masterKeyPair
       );
-      
+
       // Connect to NEAR with optimized configuration
       this.near = await connect({
         networkId: this.config.networkId,
@@ -96,15 +98,14 @@ export class FTTransferService {
         nodeUrl: this.config.nodeUrl,
         walletUrl: this.config.walletUrl,
         helperUrl: this.config.helperUrl,
-        explorerUrl: this.config.explorerUrl,
         headers: {
           'User-Agent': 'ft-transfer-api/1.0.0'
         }
       });
-      
+
       // Get account instance and verify it exists
       this.account = await this.near.account(this.config.masterAccountId);
-      
+
       // Verify account access
       try {
         const accountState = await this.account.state();
@@ -116,20 +117,20 @@ export class FTTransferService {
       } catch (error) {
         throw new Error(`Failed to access master account ${this.config.masterAccountId}: ${error}`);
       }
-      
+
       // Verify FT contract access
       try {
         await this.verifyFTContract();
       } catch (error) {
         this.logger.warn('FT contract verification failed (continuing anyway):', error);
       }
-      
+
       // Start batch processor
       this.batchProcessor.start();
-      
+
       // Setup queue event handlers
       this.setupQueueHandlers();
-      
+
       this.isInitialized = true;
       this.logger.info('High-performance FT transfer service initialized successfully', {
         masterAccountId: this.config.masterAccountId,
@@ -139,7 +140,7 @@ export class FTTransferService {
         batchSize: this.config.batchSize,
         performance: 'Optimized for 100+ TPS'
       });
-      
+
     } catch (error) {
       this.logger.error('Failed to initialize FT transfer service:', error);
       throw error;
@@ -154,14 +155,14 @@ export class FTTransferService {
         methodName: 'ft_metadata',
         args: {}
       });
-      
+
       this.logger.info('FT contract verified', {
         contractId: this.config.contractId,
         name: metadata.name,
         symbol: metadata.symbol,
         decimals: metadata.decimals
       });
-      
+
       // Check our FT balance
       try {
         const balance = await this.account.viewFunction({
@@ -169,21 +170,21 @@ export class FTTransferService {
           methodName: 'ft_balance_of',
           args: { account_id: this.config.masterAccountId }
         });
-        
+
         this.logger.info('FT balance check', {
           accountId: this.config.masterAccountId,
           balance: balance,
           symbol: metadata.symbol
         });
-        
+
         if (balance === '0' || !balance) {
           this.logger.warn('WARNING: Master account has zero FT token balance - transfers will fail');
         }
-        
+
       } catch (error) {
         this.logger.warn('Could not check FT balance:', error);
       }
-      
+
     } catch (error) {
       throw new Error(`FT contract ${this.config.contractId} is not accessible: ${error}`);
     }
@@ -198,10 +199,11 @@ export class FTTransferService {
       // Metrics updated in individual transfer methods
     });
 
-    this.transferQueue.on('failed', (error) => {
-      this.logger.error('Queue task failed:', error);
+    this.transferQueue.on('error', (error) => {
+      this.logger.error('Queue task error:', error);
       this.metrics.incrementBatchErrors();
     });
+
 
     this.transferQueue.on('idle', () => {
       this.logger.debug('Transfer queue is idle');
@@ -226,15 +228,15 @@ export class FTTransferService {
     this.validateTransferRequest(request);
 
     const queueId = this.batchProcessor.addToQueue(request);
-    
-    this.logger.debug('Transfer queued for high TPS processing', { 
-      queueId, 
+
+    this.logger.debug('Transfer queued for high TPS processing', {
+      queueId,
       receiverId: request.receiverId,
       amount: request.amount,
       queueSize: this.batchProcessor.getQueueSize(),
       transferQueueSize: this.transferQueue.size
     });
-    
+
     return queueId;
   }
 
@@ -266,7 +268,7 @@ export class FTTransferService {
 
   public getMetrics() {
     return {
-      queueSize: this.batchProcessor.getQueueSize(),
+      batchQueueSize: this.batchProcessor.getQueueSize(),
       transferQueueSize: this.transferQueue.size,
       transferQueuePending: this.transferQueue.pending,
       isInitialized: this.isInitialized,
@@ -289,7 +291,7 @@ export class FTTransferService {
 
     try {
       // Process transfers with controlled concurrency for optimal TPS
-      const transferPromises = requests.map((request, index) => 
+      const transferPromises = requests.map((request, index) =>
         this.concurrencyLimit(async () => {
           return this.processSingleTransfer(request, index);
         })
@@ -302,7 +304,7 @@ export class FTTransferService {
       const failed = results.filter(r => r.status === 'rejected').length;
       const processingTime = Date.now() - batchStartTime;
       const tps = (successful / (processingTime / 1000));
-      
+
       // Update metrics
       this.metrics.recordBatchProcessing(
         requests.length,
@@ -318,7 +320,7 @@ export class FTTransferService {
         tps: tps.toFixed(2),
         efficiency: `${((successful / requests.length) * 100).toFixed(1)}%`
       });
-      
+
       // Log detailed errors for failed transfers
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
@@ -339,7 +341,7 @@ export class FTTransferService {
 
   private async processSingleTransfer(request: TransferRequest, batchIndex?: number): Promise<string> {
     const startTime = Date.now();
-    
+
     try {
       this.logger.debug('Processing FT transfer', {
         receiverId: request.receiverId,
@@ -356,16 +358,16 @@ export class FTTransferService {
           amount: request.amount,
           memo: request.memo || null
         },
-        gas: this.config.functionCallGas, // Already in correct format
-        attachedDeposit: this.config.attachedDeposit // Already in yoctoNEAR
+        gas: BigInt(this.config.functionCallGas),
+        attachedDeposit: BigInt(this.config.attachedDeposit)
       });
-      
+
       // Update metrics
       const processingTime = Date.now() - startTime;
       this.metrics.recordTransferSuccess(processingTime);
-      
+
       const transactionHash = result?.transaction_outcome?.id || result?.transaction?.hash || 'unknown';
-      
+
       this.logger.debug('FT transfer successful', {
         receiverId: request.receiverId,
         amount: request.amount,
@@ -378,9 +380,9 @@ export class FTTransferService {
 
     } catch (error: any) {
       const processingTime = Date.now() - startTime;
-      
+
       this.metrics.recordTransferFailure(processingTime);
-      
+
       // Enhanced error logging for debugging
       this.logger.error('FT transfer failed', {
         receiverId: request.receiverId,
@@ -391,7 +393,7 @@ export class FTTransferService {
         contractId: this.config.contractId,
         batchIndex
       });
-      
+
       throw new Error(`FT transfer failed: ${error.message}`);
     }
   }
@@ -417,9 +419,9 @@ export class FTTransferService {
   public async waitForQueueEmpty(): Promise<void> {
     return new Promise((resolve) => {
       const checkQueue = () => {
-        if (this.transferQueue.size === 0 && 
-            this.transferQueue.pending === 0 && 
-            this.batchProcessor.getQueueSize() === 0) {
+        if (this.transferQueue.size === 0 &&
+          this.transferQueue.pending === 0 &&
+          this.batchProcessor.getQueueSize() === 0) {
           resolve();
         } else {
           setTimeout(checkQueue, 100);
@@ -432,26 +434,26 @@ export class FTTransferService {
   public async shutdown(): Promise<void> {
     this.logger.info('Shutting down high-performance FT transfer service');
     this.isShuttingDown = true;
-    
+
     try {
       // Stop accepting new transfers
       this.batchProcessor.stop();
-      
+
       // Wait for current transfers to complete (with timeout)
       const shutdownTimeout = setTimeout(() => {
         this.logger.warn('Shutdown timeout reached, forcing shutdown');
       }, 30000);
-      
+
       await this.waitForQueueEmpty();
       clearTimeout(shutdownTimeout);
-      
+
       // Clear the queue
       this.transferQueue.clear();
-      
+
       this.logger.info('High-performance FT transfer service shutdown completed', {
         finalMetrics: this.getPerformanceStats()
       });
-      
+
     } catch (error) {
       this.logger.error('Error during shutdown:', error);
     }
@@ -461,17 +463,17 @@ export class FTTransferService {
   public getPerformanceStats() {
     const metrics = this.getMetrics();
     const now = Date.now();
-    
+
     // Calculate current TPS from recent activity
     const currentTPS = this.calculateCurrentTPS();
-    
+
     return {
       // Core performance metrics
       currentTPS,
       avgProcessingTime: metrics.averageProcessingTime || 0,
-      successRate: metrics.totalTransfers > 0 ? 
+      successRate: metrics.totalTransfers > 0 ?
         (metrics.successfulTransfers / metrics.totalTransfers) * 100 : 0,
-      
+
       // Queue health indicators
       queueHealth: {
         batchQueueSize: metrics.queueSize,
@@ -479,7 +481,7 @@ export class FTTransferService {
         transferQueuePending: metrics.transferQueuePending,
         concurrency: this.config.queueConcurrency
       },
-      
+
       // Throughput indicators
       throughput: {
         totalTransfers: metrics.totalTransfers,
@@ -488,15 +490,15 @@ export class FTTransferService {
         totalBatches: metrics.totalBatches,
         avgBatchSize: metrics.batchMetrics?.avgBatchSize || 0
       },
-      
+
       // Performance assessment for bounty
       bountyCompliance: {
         targetTPS: 100,
         achieved: currentTPS >= 100,
-        performance: currentTPS >= 150 ? 'EXCELLENT' : 
-                    currentTPS >= 100 ? 'MEETS_REQUIREMENT' : 'BELOW_TARGET'
+        performance: currentTPS >= 150 ? 'EXCELLENT' :
+          currentTPS >= 100 ? 'MEETS_REQUIREMENT' : 'BELOW_TARGET'
       },
-      
+
       // System status
       systemStatus: {
         isInitialized: this.isInitialized,
@@ -509,30 +511,37 @@ export class FTTransferService {
 
   private calculateCurrentTPS(): number {
     const metrics = this.metrics.getMetrics();
-    
+
     // Use a sliding window approach for more accurate current TPS
     const timeWindow = 60000; // 1 minute window
     const recentSuccessful = metrics.successfulTransfers;
     const recentTime = metrics.totalProcessingTime;
-    
+
     if (recentSuccessful > 0 && recentTime > 0) {
       return recentSuccessful / (recentTime / 1000);
     }
-    
+
     // Alternative calculation based on recent batch performance
     if (metrics.lastBatchTime > 0 && metrics.totalBatches > 0) {
       const avgBatchSize = metrics.successfulTransfers / metrics.totalBatches;
       const avgBatchTime = metrics.totalProcessingTime / metrics.totalBatches;
       return (avgBatchSize / (avgBatchTime / 1000));
     }
-    
+
     return 0;
   }
 
   // Health check method
-  public async healthCheck(): Promise<{healthy: boolean, details: any}> {
+  public async healthCheck(): Promise<{ healthy: boolean, details: any }> {
     try {
-      const details = {
+      const details: {
+        initialized: boolean;
+        nearConnection: boolean;
+        ftContract: boolean;
+        accountBalance: string | null;
+        ftBalance: string | null;
+        queueStatus: { size: number; pending: number };
+      } = {
         initialized: this.isInitialized,
         nearConnection: false,
         ftContract: false,
@@ -572,8 +581,8 @@ export class FTTransferService {
 
       return { healthy, details };
     } catch (error) {
-      return { 
-        healthy: false, 
+      return {
+        healthy: false,
         details: { error: error instanceof Error ? error.message : 'Unknown error' }
       };
     }

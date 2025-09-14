@@ -17,20 +17,20 @@ const logger = new Logger('Server');
 export async function createServer(): Promise<express.Application> {
   const app = express();
   const config = getConfig();
-  
+
   // Validate configuration
   const configErrors = validateConfig(config);
   if (configErrors.length > 0) {
     throw new Error(`Configuration errors: ${configErrors.join(', ')}`);
   }
-  
+
   logger.info('Starting FT Transfer API Server for NEAR Bounty', {
     networkId: config.networkId,
     targetPerformance: '100+ TPS',
     library: 'near-api-js (stable)',
     nodeEnv: config.nodeEnv
   });
-  
+
   // Security middleware
   app.use(helmet({
     contentSecurityPolicy: {
@@ -42,14 +42,14 @@ export async function createServer(): Promise<express.Application> {
       }
     }
   }));
-  
+
   app.use(cors({
     origin: config.corsOrigin,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
   }));
-  
+
   // Compression middleware for better performance
   // app.use(compression({
   //   level: 6,
@@ -61,24 +61,24 @@ export async function createServer(): Promise<express.Application> {
   //     return compressionFilter(req, res);
   //   }
   // }));
-  
+
   // Body parsing middleware with optimized limits
-  app.use(express.json({ 
+  app.use(express.json({
     limit: '10mb',
     strict: true,
     type: 'application/json'
   }));
-  app.use(express.urlencoded({ 
-    extended: true, 
+  app.use(express.urlencoded({
+    extended: true,
     limit: '10mb',
     parameterLimit: 100
   }));
-  
+
   // Request logging
   if (config.nodeEnv !== 'production') {
     app.use(requestLogger);
   }
-  
+
   // Rate limiting optimized for high TPS API
   const rateLimiter = new RateLimiterMemory({
     points: config.rateLimitPoints, // Number of requests
@@ -86,7 +86,7 @@ export async function createServer(): Promise<express.Application> {
     blockDuration: 10, // Block for 10 seconds if exceeded
     execEvenly: true // Spread requests evenly across duration
   });
-  
+
   app.use(async (req, res, next) => {
     try {
       await rateLimiter.consume(req.ip || 'unknown');
@@ -94,7 +94,7 @@ export async function createServer(): Promise<express.Application> {
     } catch (rateLimiterRes: any) {
       const remainingPoints = rateLimiterRes?.remainingPoints ?? 0;
       const msBeforeNext = rateLimiterRes?.msBeforeNext ?? 1000;
-      
+
       res.status(429).json({
         success: false,
         error: 'Rate limit exceeded - High TPS API protection',
@@ -106,7 +106,7 @@ export async function createServer(): Promise<express.Application> {
       });
     }
   });
-  
+
   // Prometheus metrics middleware for monitoring TPS performance
   if (config.metricsEnabled) {
     app.use(promMiddleware({
@@ -115,31 +115,31 @@ export async function createServer(): Promise<express.Application> {
       requestDurationBuckets: [0.01, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10], // Optimized for fast API
       requestLengthBuckets: [512, 1024, 5120, 10240, 51200, 102400],
       responseLengthBuckets: [512, 1024, 5120, 10240, 51200, 102400],
-      includeMethod: true,
-      includePath: true,
-      includeStatusCode: true,
-      includeUp: true,
-      ccustomLabels: ['service', 'version', 'bounty'],
-transformLabels(labels) {
-  labels.service = 'ft-transfer-api';
-  labels.version = '1.0.0';
-  labels.bounty = 'near-100tps';
-  return labels;
-}
+      // includeMethod: true,
+      // includePath: true,
+      // includeStatusCode: true,
+      // includeUp: true,
+      customLabels: ['service', 'version', 'bounty'],
+      transformLabels(labels) {
+        labels.service = 'ft-transfer-api';
+        labels.version = '1.0.0';
+        labels.bounty = 'near-100tps';
+        return labels;
+      }
     }));
   }
-  
+
   // Request ID middleware for tracing
   app.use((req: any, res, next) => {
     req.id = Math.random().toString(36).substring(2, 15);
     res.setHeader('X-Request-ID', req.id);
     next();
   });
-  
+
   // Initialize FT Transfer Service
   logger.info('Initializing FT Transfer Service with near-api-js optimization');
   const transferService = FTTransferService.getInstance();
-  
+
   try {
     await transferService.initialize();
     logger.info('FT Transfer Service initialized successfully', {
@@ -151,16 +151,16 @@ transformLabels(labels) {
     logger.error('Failed to initialize FT Transfer Service:', error);
     throw error;
   }
-  
+
   // Setup API routes
   setupRoutes(app, transferService);
-  
+
   // Error handling middleware (should be last)
   app.use(errorHandler);
-  
+
   // 404 handler with helpful message
   app.use('*', (req, res) => {
-    res.status(404).json({ 
+    res.status(404).json({
       success: false,
       error: 'Endpoint not found',
       availableEndpoints: [
@@ -177,13 +177,13 @@ transformLabels(labels) {
       timestamp: new Date().toISOString()
     });
   });
-  
+
   logger.info('FT Transfer API Server configured successfully for NEAR bounty', {
     endpoints: ['transfer', 'bulk-transfer', 'health', 'metrics', 'bounty-status'],
     rateLimit: `${config.rateLimitPoints}/sec`,
     targetPerformance: '100+ TPS sustained',
     library: 'near-api-js'
   });
-  
+
   return app;
 }
