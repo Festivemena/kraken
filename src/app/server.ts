@@ -119,11 +119,13 @@ export async function createServer(): Promise<express.Application> {
       includePath: true,
       includeStatusCode: true,
       includeUp: true,
-      customLabels: {
-        service: 'ft-transfer-api',
-        version: '1.0.0',
-        bounty: 'near-100tps'
-      }
+      ccustomLabels: ['service', 'version', 'bounty'],
+transformLabels(labels) {
+  labels.service = 'ft-transfer-api';
+  labels.version = '1.0.0';
+  labels.bounty = 'near-100tps';
+  return labels;
+}
     }));
   }
   
