@@ -98,7 +98,7 @@ async function bootstrap() {
       console.log('='.repeat(60) + '\n');
       
       // Setup graceful shutdown
-      setupGracefulShutdown(server);
+      // setupGracefulShutdown(server);
     });
 
     // Handle server startup errors

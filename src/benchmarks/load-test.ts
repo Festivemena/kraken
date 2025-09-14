@@ -215,11 +215,7 @@ export class FTTransferBenchmark {
     // Generate valid testnet account IDs for testing
     // In production benchmark, these would need to be real accounts
     const testAccounts = [
-      'alice.testnet',
-      'bob.testnet',
-      'carol.testnet',
-      'dave.testnet',
-      'eve.testnet'
+      'tx-bench.testnet'
     ];
     
     // Rotate through test accounts or create deterministic ones
