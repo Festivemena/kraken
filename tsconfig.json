@@ -4,6 +4,7 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "strict": true,
+    "typeRoots": [ "./node_modules/@types", "./types" ],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,

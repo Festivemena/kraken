@@ -2,7 +2,6 @@ import express from 'express';
 import { Request, Response } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import compression, { filter as compressionFilter } from 'compression';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import promMiddleware from 'express-prometheus-middleware';
 
