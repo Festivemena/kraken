@@ -82,9 +82,9 @@ export class FTTransferService {
       this.keyStore = new keyStores.InMemoryKeyStore();
 
       // Add master key to keystore
-      const masterKeyPair = utils.KeyPair.fromString(
-        this.config.masterPrivateKey
-      );
+       const masterKeyPair = KeyPair.fromString(
+      this.config.masterPrivateKey as `ed25519:${string}`
+    );
       await this.keyStore.setKey(
         this.config.networkId,
         this.config.masterAccountId,
