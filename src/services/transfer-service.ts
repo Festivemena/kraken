@@ -266,7 +266,7 @@ export class FTTransferService {
     }
   }
 
-  public getMetrics() {
+  public getMetrics(): any {
     return {
       batchQueueSize: this.batchProcessor.getQueueSize(),
       transferQueueSize: this.transferQueue.size,
